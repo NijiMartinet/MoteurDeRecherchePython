@@ -48,5 +48,5 @@ else :
             if nbcara<20:
                 docs.rem_document(i)
 
-    docs.save("test")
-print(docs)
+    #docs.save("test")
+docs.concorde("electron")

@@ -1,6 +1,9 @@
 import pandas as pd
-from Document import Document, RedditDocument, ArxivDocument
+import re
+from Document import Document, RedditDocument, ArxivDocument, DocumentGenerator
 from Author import Author
+
+
 
 def singleton(cls):
     instances = [None]
@@ -19,6 +22,7 @@ class Corpus :
         self.ndoc = 0
         self.naut = 0
         self.iddocument = 0
+        self.texte = ""
 
     def augmente_id_document(self):
         self.iddocument+=1
@@ -91,10 +95,32 @@ class Corpus :
         df=pd.read_csv(f"{filename}.csv",sep="\t")
         for i in range(len(df)):
             if df["type"][i]=="Reddit":
-                self.add_documentReddit(df["titre"][i],df["auteur"][i],df["date"][i],df["url"][i],df["texte"][i],df["autre"][i])
+                self.add_document(DocumentGenerator("Reddit",df["titre"][i],df["auteur"][i],df["date"][i],df["url"][i],df["texte"][i],df["autre"][i]))
             else:
-                self.add_documentArxiv(df["titre"][i],df["auteur"][i],df["date"][i],df["url"][i],df["texte"][i],df["autre"][i])
+                self.add_document(DocumentGenerator("Arxiv",df["titre"][i],df["auteur"][i],df["date"][i],df["url"][i],df["texte"][i],df["autre"][i]))
 
+    def scarch(self, keyword):
+        if self.texte=="" :
+            for doc in self.id2doc.values():
+                self.texte+=doc.get_texte()+"\n"
+        p = re.compile(keyword)
+        textefound = p.finditer(self.texte)
+        df = []
+        for t in textefound:
+            contexte_gauche = "..."+self.texte[t.start()-30:t.start()]
+            contexte_droit = self.texte[t.end():t.end()+30]+"..."
+            mot = self.texte[t.start():t.end()]
+            df.append({'contexte gauche':contexte_gauche,
+                            'mot':mot,
+                            'contexte droit':contexte_droit})
+        return df
+
+    def concorde(self, keyword):
+        df = pd.DataFrame(self.scarch(keyword))
+        print(df)
+
+
+        
 
 '''
     def add_document(self, titre, auteur, date, url, texte):
