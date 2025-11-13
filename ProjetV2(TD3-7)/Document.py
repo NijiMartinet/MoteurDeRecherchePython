@@ -90,6 +90,14 @@ class ArxivDocument(Document):
 
 
 
+class DocumentGenerator :
+    @staticmethod
+    def factory(type, titre, auteur, date, url, texte, autre):
+        if type == "Reddit":
+            return RedditDocument(titre, auteur, date, url, texte, autre)
+        if type == "Arxiv":
+            return ArxivDocument(titre, auteur, date, url, texte, autre)
+
 
 
 

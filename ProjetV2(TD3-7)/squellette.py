@@ -4,7 +4,7 @@ import xmltodict
 import pandas as pd
 import os
 from Corpus import Corpus
-from Document import Document, RedditDocument, ArxivDocument
+from Document import Document, RedditDocument, ArxivDocument, DocumentGenerator
 
 docs = Corpus("bl")
 
@@ -23,7 +23,7 @@ else :
         url=post.url
         auteur=post.author
         nbcomment = post.num_comments
-        docs.add_documentReddit(titre, auteur, date, url, texte, nbcomment)
+        docs.add_document(DocumentGenerator.factory("Reddit", titre, auteur, date, url, texte, nbcomment))
     
     url = 'http://export.arxiv.org/api/query?search_query=all:electron&start=0&max_results=2'
     requete = urllib.request.urlopen(url)
@@ -37,7 +37,7 @@ else :
         titre=parsed['feed']['entry'][j]['title']
         date=parsed['feed']['entry'][j]['published']
         url=parsed['feed']['entry'][j]['id']
-        docs.add_documentArxiv(titre, auteur, date, url, texte,coauteur)
+        docs.add_document(DocumentGenerator.factory("Arxiv", titre, auteur, date, url, texte, coauteur))
     
     
     for i in docs.id2doc.copy():

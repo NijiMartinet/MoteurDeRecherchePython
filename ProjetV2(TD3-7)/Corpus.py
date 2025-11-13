@@ -2,6 +2,15 @@ import pandas as pd
 from Document import Document, RedditDocument, ArxivDocument
 from Author import Author
 
+def singleton(cls):
+    instances = [None]
+    def wrapper(*args, **kwargs):
+        if instances[0] is None:
+            instances[0] = cls(*args, **kwargs)
+        return instances[0]
+    return wrapper
+
+@singleton
 class Corpus :
     def __init__(self,nom) :
         self.nom = nom
@@ -14,25 +23,12 @@ class Corpus :
     def augmente_id_document(self):
         self.iddocument+=1
 
-    def add_documentReddit(self, titre, auteur, date, url, texte, nbcom):
+    def add_document(self, document):
         self.augmente_id_document()
-        document=RedditDocument(titre,auteur,date,url,texte,nbcom)
-        self.id2doc[self.iddocument] = document
-        self.ndoc+=1
-        #Si l'auteur n'existe pas on le crée
-        if auteur not in self.id2aut:
-            self.id2aut[auteur]=Author(auteur)
-            self.naut+=1
-
-        #On ajoute le document à l'auteur
-        self.id2aut[auteur].add(self.iddocument,document)
-
-    def add_documentArxiv(self, titre, auteur, date, url, texte, coauteur):
-        self.augmente_id_document()
-        document=ArxivDocument(titre,auteur,date,url,texte,coauteur)
         self.id2doc[self.iddocument] = document
         self.ndoc+=1
         
+        auteur = document.get_auteur()
         #Si l'auteur n'existe pas on le crée
         if auteur not in self.id2aut:
             self.id2aut[auteur]=Author(auteur)
@@ -40,13 +36,6 @@ class Corpus :
 
         #On ajoute le document à l'auteur
         self.id2aut[auteur].add(self.iddocument,document)
-
-        auteurs_co = coauteur.split("//")
-        for coaut in auteurs_co:
-            if coaut not in self.id2aut:
-                self.id2aut[coaut]=Author(coaut)
-                self.naut+=1
-            self.id2aut[coaut].add(self.iddocument,document)
 
     def __str__(self):
         stri = f"Nombre de documents :"+str(self.ndoc)+f"\nNombre d'auteur :"+ str(self.naut)
@@ -121,5 +110,39 @@ class Corpus :
 
         #On ajoute le document à l'auteur
         self.id2aut[auteur].add(self.iddocument,document)
+
+    def add_documentReddit(self, titre, auteur, date, url, texte, nbcom):
+        self.augmente_id_document()
+        document=RedditDocument(titre,auteur,date,url,texte,nbcom)
+        self.id2doc[self.iddocument] = document
+        self.ndoc+=1
+        #Si l'auteur n'existe pas on le crée
+        if auteur not in self.id2aut:
+            self.id2aut[auteur]=Author(auteur)
+            self.naut+=1
+
+        #On ajoute le document à l'auteur
+        self.id2aut[auteur].add(self.iddocument,document)
+
+    def add_documentArxiv(self, titre, auteur, date, url, texte, coauteur):
+        self.augmente_id_document()
+        document=ArxivDocument(titre,auteur,date,url,texte,coauteur)
+        self.id2doc[self.iddocument] = document
+        self.ndoc+=1
+        
+        #Si l'auteur n'existe pas on le crée
+        if auteur not in self.id2aut:
+            self.id2aut[auteur]=Author(auteur)
+            self.naut+=1
+
+        #On ajoute le document à l'auteur
+        self.id2aut[auteur].add(self.iddocument,document)
+
+        auteurs_co = coauteur.split("//")
+        for coaut in auteurs_co:
+            if coaut not in self.id2aut:
+                self.id2aut[coaut]=Author(coaut)
+                self.naut+=1
+            self.id2aut[coaut].add(self.iddocument,document)
 
 '''
