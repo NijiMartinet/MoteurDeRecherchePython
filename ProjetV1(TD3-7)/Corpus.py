@@ -162,12 +162,16 @@ class Corpus:
 
     # Fonction load() qui permet de charger un corpus à partir d'un fichier CSV
     def load(self, filename):
+        #On remet l'identifiant du document à 0
+        self.iddocument = 0
         # On lit le fichier CSV
         df = pd.read_csv(f"{filename}.csv", sep="\t")
         # On boucle sur chaque ligne du DataFrame pour ajouter les documents au corpus
         for i in range(len(df)):
+            self.augmente_id_document()
             # Grace à la class DocumentGenerator, un même ligne crée des
-            self.add_document(DocumentGenerator.factory(df["type"][i],df["titre"][i],df["auteur"][i],df["date"][i],df["url"][i],df["texte"][i],df["autre"][i]))
+            self.add_document(DocumentGenerator.factory(self.iddocument,df["titre"][i],df["auteur"][i],df["date"][i],df["url"][i],df["texte"][i],df["autre"][i]))
+        self.save(filename)
 
     def search(self, keyword):
         if self.texte=="" :
