@@ -23,6 +23,8 @@ class Corpus:
         self.ndoc = 0  # Nombre de documents dans le corpus
         self.naut = 0  # Nombre d'auteurs dans le corpus
         self.iddocument = 0  # Identifiant des documents géré automatiquement
+        self.texte=""  # Texte de tout le corpus 
+        self.vocabulaire=dict()  # Vocabulaire du corpus
 
     # Fonction augmente_id_document() qui permet d'augmenter l'identifiant des documents
     def augmente_id_document(self):
@@ -170,7 +172,16 @@ class Corpus:
     def search(self, keyword):
         if self.texte=="" :
             for doc in self.id2doc.values():
-                self.texte+=doc.get_texte()+"\n"
+                self.texte+=doc.get_texte()+" "
+                #Pensez à split avec la ponctuation, les chiffres, etc ...
+                vocabulaire = doc.get_texte().split()
+                for mot in vocabulaire:
+                    if mot not in self.vocabulaire:
+                        self.vocabulaire[mot]=1
+                    else:
+                        self.vocabulaire[mot]+=1
+
+
         p = re.compile(keyword)
         textefound = p.finditer(self.texte)
         df = []
@@ -184,5 +195,20 @@ class Corpus:
         return df
 
     def concorde(self, keyword):
-        df = pd.DataFrame(self.scarch(keyword))
+        df = pd.DataFrame(self.search(keyword))
         print(df)
+
+    def nettoyer_texte(self, texte):
+        texte = texte.lower()
+        texte = texte.replace("\n", " ")
+
+
+
+        
+
+
+
+
+
+        
+

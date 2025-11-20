@@ -19,9 +19,9 @@ else:
     )
 
     # On va charger le CORPS de chaque subreddit en lien avec le machinLearning (en vrai que 10 c'est bien)
-    hot_posts = reddit.subreddit("all").hot(limit=5000)
+    hot_posts = reddit.subreddit("all").hot(limit=100)
     for post in hot_posts:
-        texte = post.selftext.replace("\n", " ")
+        texte = post.selftext.replace("\\n", " ")
         titre = post.title
         # Transforme la date en format date
         date = pd.to_datetime(post.created, unit="s").date()
@@ -31,11 +31,11 @@ else:
         # Insert le document au corpus
         docs.add_document(DocumentGenerator.factory("Reddit", titre, auteur, date, url, texte, nbcomment))
 
-    url = "http://export.arxiv.org/api/query?search_query=all:electron&start=0&max_results=5000"
+    url = "http://export.arxiv.org/api/query?search_query=all:electron&start=0&max_results=20"
     requete = urllib.request.urlopen(url)
     parsed = xmltodict.parse(requete.read().decode("utf-8"))
     for j in range(0, len(parsed["feed"]["entry"])):
-        texte = parsed["feed"]["entry"][j]["summary"].replace("\n", " ")
+        texte = parsed["feed"]["entry"][j]["summary"].replace("\\n", " ")
         
         # Vu qu'il existe des co-auteur, on crée une variable avec la liste des auteurs
         auteur_list = parsed["feed"]["entry"][j]["author"]
@@ -78,4 +78,6 @@ else:
     # On enregiste le document crée
     docs.save("test")
 
-print(docs)
+docs.concorde("electron")
+
+
