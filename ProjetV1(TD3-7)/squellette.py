@@ -5,6 +5,7 @@ import pandas as pd
 import os
 from Corpus import Corpus
 from Document import DocumentGenerator
+from SearchEngine import SearchEngine
 
 docs = Corpus("test")
 
@@ -78,6 +79,12 @@ else:
     # On enregiste le document crée
     docs.save("test")
 
-docs.concorde("electron")
+#docs.concorde("electron")
+
+
+bl = SearchEngine(docs)
+bl.blbl()
+bl.blbl2()
+bl.info()
 
 

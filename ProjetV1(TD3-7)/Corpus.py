@@ -44,7 +44,6 @@ class Corpus:
 
     # Fonction add_document() qui permet d'ajouter un document au corpus
     def add_document(self, document):
-        self.augmente_id_document()  # On augmente l'identifiant du document
         self.id2doc[self.iddocument] = (
             document  # On ajoute le document au dictionnaire des documents avec comme id l'id généré
         )
@@ -74,6 +73,7 @@ class Corpus:
                         self.naut += 1
                     # Puis on lui ajoute le document
                     self.id2aut[co].add(self.iddocument, document)
+        self.augmente_id_document()  # On augmente l'identifiant du document
 
     # Fonction str() pour afficher les informations du corpus via print(corpus)
     def __str__(self):
@@ -168,9 +168,8 @@ class Corpus:
         df = pd.read_csv(f"{filename}.csv", sep="\t")
         # On boucle sur chaque ligne du DataFrame pour ajouter les documents au corpus
         for i in range(len(df)):
-            self.augmente_id_document()
-            # Grace à la class DocumentGenerator, un même ligne crée des
-            self.add_document(DocumentGenerator.factory(self.iddocument,df["titre"][i],df["auteur"][i],df["date"][i],df["url"][i],df["texte"][i],df["autre"][i]))
+            # Grace à la class DocumentGenerator, un même ligne crée des documents différents
+            self.add_document(DocumentGenerator.factory(df["type"][i],df["titre"][i],df["auteur"][i],df["date"][i],df["url"][i],df["texte"][i],df["autre"][i]))
         self.save(filename)
 
     def search(self, keyword):
@@ -184,7 +183,6 @@ class Corpus:
                         self.vocabulaire[mot]=1
                     else:
                         self.vocabulaire[mot]+=1
-
 
         p = re.compile(keyword)
         textefound = p.finditer(self.texte)
