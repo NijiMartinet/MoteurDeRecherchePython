@@ -83,8 +83,4 @@ else:
 
 
 bl = SearchEngine(docs)
-bl.blbl()
-bl.blbl2()
-bl.info()
-
 

@@ -1,6 +1,7 @@
 from Corpus import Corpus
 from numpy import array
 from numpy import zeros
+from math import log
 import re
 from scipy.sparse import csr_matrix
 
@@ -9,59 +10,58 @@ class SearchEngine:
     #Fonction pour construire le vocabulaire du dictionnaire
     def defVocab(self):
         i=0
+        vocab = dict()
         for doc in self.corpus.id2doc.values():
             texte = doc.get_texte()
             texte = texte.lower()
-            texte = re.sub(r'[^a-z0-9]', ' ', texte)
+            texte = re.sub(r'[^a-z]', ' ', texte)
 
             vocabulaire = texte.split()
-            vocab = dict()
             nvdoucument=[]
             for mot in vocabulaire:
-                if mot not in self.vocab:
+                if mot not in vocab:
                     vocab[mot]={'identifiant':i,'frequenceCorpus':1,'frequenceDocument':1}
                     i+=1
-                    print(mot)
                 else:
                     vocab[mot]['frequenceCorpus']+=1
                 if mot not in nvdoucument:
                     nvdoucument.append(mot)
                     vocab[mot]['frequenceDocument']+=1
-        return vocab
-
-    #Fonction pour inversé le dictionnaire vocab
-    def defInvvocab(self):
-        invvocab=dict()
-        for mot in self.vocab:
-            invvocab[self.vocab[mot]['identifiant']]=mot
-        return invvocab
+        #print("i:",i,"\nvocab:",len(vocab.keys()))
     
     #Fonction pour définir la matrice mat_TF
     def defMat_TF(self):
-        ni = self.corpus.ndoc
-        nj = len(self.invvocab)
-        mat_TF = zeros((ni,nj))
-        for i in range(ni):
-            for j in range(nj):
-                p = re.compile(self.invvocab[j])
-                textefound = list(p.finditer(self.corpus.id2doc.get(i).get_texte()))
-                mat_TF[i][j]=len(textefound)
+        mat_TF = zeros((self.corpus.ndoc,len(self.vocab)))
+        for d in self.corpus.id2doc:
+            for v in self.vocab:
+                i = self.vocab[v]['identifiant']
+                p = re.compile(v)
+                textefound = list(p.finditer(self.corpus.id2doc.get(d).get_texte()))
+                mat_TF[d][i]=len(textefound)
         mat_TF = csr_matrix(mat_TF, dtype=int).toarray()
-        return mat_TF
+        self.mat_TF = mat_TF
     
     def defMat_TFxIDF(self):
-        ndoc = self.corpus.ndoc
-        nvoc = len(self.invvocab)
-        for v in range(nvoc):
-            for d in range(ndoc):
-                print(v,d)
-
+        mat_TFxIDF = zeros((self.corpus.ndoc,len(self.vocab)))
+        for d in self.corpus.id2doc:
+            nb_mot_doc = len(self.corpus.id2doc.get(d).get_texte().split())
+            for v in self.vocab:
+                i = self.vocab[v]['identifiant']
+                tf=self.mat_TF[d][i] / nb_mot_doc
+                idf = log(self.corpus.ndoc / self.vocab[v]['frequenceDocument'])
+                mat_TFxIDF[d][i]= tf * idf
+        mat_TFxIDF = csr_matrix(mat_TFxIDF, dtype=int).toarray()
+        return mat_TFxIDF
 
     def __init__(self, corpus):
         self.corpus=corpus
         self.vocab=self.defVocab()
-        self.invvocab= self.defInvvocab()
-        self.mat_TF=array([])
+        self.mat_TF=self.defMat_TF()
+        self.mat_TFxIDF = self.defMat_TFxIDF()
+
+    def recherche(self, texte):
+        vector = zeros((len(self.vocab)))
+        print(vector,len(vector))
  
     def info(self):
         print("Taille de vocab :", len(self.vocab))
