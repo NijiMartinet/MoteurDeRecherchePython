@@ -83,4 +83,6 @@ else:
 
 
 bl = SearchEngine(docs)
+recherche = bl.search("electron the", 7)
+print(recherche)
 
