@@ -66,8 +66,9 @@ class SearchEngine:
                 textefound = list(p.finditer(texte))
                 #On met le nombre d'occurence dans la bonne case de la matrice
                 mat_TF[d][i]=len(textefound)
-        #On utilise csr_matrix pour notre matrice
+        #On utilise csr_matrix pour notre matrice car c'est une matrice creuse
         mat_TF = csr_matrix(mat_TF, dtype=int).toarray()
+        #On retourne la matrice
         return mat_TF
     
     #Fonction pour définir la matrice mat_TFxIDF
@@ -87,10 +88,9 @@ class SearchEngine:
                 tf=self.mat_TF[d][i] / nb_mot_doc
                 #On calcule idf = log(nombre de document / nombre de document où il y a le mot)
                 idf = log(self.corpus.ndoc / self.vocab[v]['frequenceDocument'])
-                #print(tf,"*",idf,"=",tf*idf)
                 #On ajoute la valeure à la bonne case de la matrice 
                 mat_TFxIDF[d][i]= tf * idf        
-        
+        #On retourne la matrice
         return mat_TFxIDF
 
 
@@ -102,17 +102,20 @@ class SearchEngine:
         self.mat_TFxIDF = self.defMat_TFxIDF()
 
     def search(self, texte, n):
-        tab_doc = []
         #On crée un vecteur de la bonne dimention
         vector = array(zeros((len(self.vocab))))
-        #On récupère tout les mot
+        #On récupère tout les mot du texte et on fait des traitement dessus
         texte = texte.lower()
         texte = re.sub(r'[^a-z]', ' ', texte)
         mots = texte.split()
+
         for v in self.vocab:
             if v in mots:
+                #On met à 1 là où on retrouve les mots
                 vector[self.vocab[v]['identifiant']]=1
         
+        #On crée un tableau qui comportera la mesure tf-idf et l'identifiant du document
+        tab_doc = []
         for d in self.corpus.id2doc:
             vector_doc = array(self.mat_TFxIDF[d])
             cos = dot(vector,vector_doc) / (norm(vector) * norm(vector_doc))
@@ -129,7 +132,6 @@ class SearchEngine:
                     "texte": doc.get(tab_doc[-i][1]).get_texte()
                 }
             )
-        
         res = pd.DataFrame(res)
         return res
             
