@@ -114,30 +114,37 @@ class SearchEngine:
                 #On met à 1 là où on retrouve les mots
                 vector[self.vocab[v]['identifiant']]=1
         
-        #On crée un tableau qui comportera la mesure tf-idf et l'identifiant du document
+        #On crée un tableau qui comportera la mesure de distance et l'id du docuement
         tab_doc = []
+        #Pour chaque document
         for d in self.corpus.id2doc:
+            #On récupère son vecteur
             vector_doc = array(self.mat_TFxIDF[d])
             cos = dot(vector,vector_doc) / (norm(vector) * norm(vector_doc))
             tab_doc.append((cos,d))
 
+        #On trie le tableau en fonction de la mesure de distance dans l'ordre croissant
         tab_doc = sorted(tab_doc, key=lambda x: x[0])
+        #On fait notre tableau de résultats
         res = []
         doc = self.corpus.id2doc
+        #On boucle de 1 à n avec n le nombre de document qu'on veux
         for i in range(1,n+1):
+            #On ajoute au résultats le document avec son id, son titre et son texte
             res.append(
                 {
-                    "id":tab_doc[-i][1],
+                    "id":tab_doc[-i][1], #On utilise -i car les mesures de distance sont ranger dans l'ordre croissant donc celle qui nous interressent sont à la fin
                     "titre": doc.get(tab_doc[-i][1]).get_titre(),
                     "texte": doc.get(tab_doc[-i][1]).get_texte()
                 }
             )
-        res = pd.DataFrame(res)
-        return res
+        return pd.DataFrame(res)
             
- 
+
     def info(self):
         print("Taille de vocab :", len(self.vocab))
-        print("Taille de invvocab :", len(self.invvocab))
         print("Nombre de documents :",self.corpus.ndoc)
         print("Taille de mat_TF :", self.mat_TF.size)
+
+    def __str__(self):
+        return "Corpus de "+str(self.corpus.ndoc)+" documents avec "+str(len(self.vocab))+" mot de vocabulaire différents"

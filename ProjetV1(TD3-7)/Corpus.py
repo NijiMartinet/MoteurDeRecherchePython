@@ -155,9 +155,8 @@ class Corpus:
     # Focntion save() qui permet de sauvegarder le corpus dans un fichier CSV
     def save(self, filename):
         df = self.to_dataframe()  # On récupère le DataFrame du corpus
-        df.to_csv(
-            f"{filename}.csv", index=False, sep="\t"
-        )  # On l'enregistre en format CSV avec comme séparateur une tabulation
+        # On l'enregistre en format CSV avec comme séparateur une tabulation
+        df.to_csv(f"{filename}.csv", index=False, sep="\t")  
         print(f"Corpus sauvgardé dans {filename}.csv")
 
     # Fonction load() qui permet de charger un corpus à partir d'un fichier CSV
@@ -166,11 +165,17 @@ class Corpus:
         self.iddocument = 0
         # On lit le fichier CSV
         df = pd.read_csv(f"{filename}.csv", sep="\t")
+        identifiantok=True #Nous permettant de savoir si les identifiants sont correcte
+
         # On boucle sur chaque ligne du DataFrame pour ajouter les documents au corpus
         for i in range(len(df)):
             # Grace à la class DocumentGenerator, un même ligne crée des documents différents
+            if df["id"][i] != self.iddocument:
+                identifiantok=False
             self.add_document(DocumentGenerator.factory(df["type"][i],df["titre"][i],df["auteur"][i],df["date"][i],df["url"][i],df["texte"][i],df["autre"][i]))
-        self.save(filename)
+        #Si les/un des identifiants n'est pas correcte, on réenregistre le documents.
+        if not identifiantok:
+            self.save(filename)
 
     def search(self, keyword):
         if self.texte=="" :
@@ -203,6 +208,7 @@ class Corpus:
     def nettoyer_texte(self, texte):
         texte = texte.lower()
         texte = texte.replace("\n", " ")
+
 
 
 
