@@ -42,9 +42,9 @@ class Corpus:
     # Fonction add_document() qui permet d'ajouter un document au corpus
     def add_document(self, document):
         self.augmente_id_document()  # On augmente l'identifiant du document
-        self.id2doc[self.iddocument] = (
-            document  # On ajoute le document au dictionnaire des documents avec comme id l'id généré
-        )
+        # On ajoute le document au dictionnaire des documents avec comme id l'id généré
+        self.id2doc[self.iddocument] = (document)
+        
         self.ndoc += 1  # On augmente le nombre de documents dans le corpus
 
         # On récupère l'auteur du document
@@ -74,13 +74,7 @@ class Corpus:
 
     # Fonction str() pour afficher les informations du corpus via print(corpus)
     def __str__(self):
-        stri = (
-            f"Nombre de documents :"
-            + str(self.ndoc)
-            + f"\nNombre d'auteur :"
-            + str(self.naut)
-        )
-        return stri
+        return f"Nombre de documents :{self.ndoc}\nNombre d'auteur :{self.naut}"
 
     # Fonction rem_document() qui permet de retirer un document du corpus
     def rem_document(self, doc_id):
@@ -128,7 +122,6 @@ class Corpus:
                         "url": doc.get_url(),
                         "texte": doc.get_texte(),
                         "autre": doc.get_nbcom(),
-                        "taille_texte": len(doc.get_texte()),
                     }
                 )
             # Si le document est de type Arxiv on ajoute les informations spécifiques
@@ -144,7 +137,6 @@ class Corpus:
                         "url": doc.get_url(),
                         "texte": doc.get_texte(),
                         "autre": doc.get_coauteur(),
-                        "taille_texte": len(doc.get_texte()),
                     }
                 )
         return pd.DataFrame(data)
@@ -152,9 +144,8 @@ class Corpus:
     # Focntion save() qui permet de sauvegarder le corpus dans un fichier CSV
     def save(self, filename):
         df = self.to_dataframe()  # On récupère le DataFrame du corpus
-        df.to_csv(
-            f"{filename}.csv", index=False, sep="\t"
-        )  # On l'enregistre en format CSV avec comme séparateur une tabulation
+        # On l'enregistre en format CSV avec comme séparateur une tabulation
+        df.to_csv(f"{filename}.csv", index=False, sep="\t") 
         print(f"Corpus sauvgardé dans {filename}.csv")
 
     # Fonction load() qui permet de charger un corpus à partir d'un fichier CSV
@@ -164,4 +155,4 @@ class Corpus:
         # On boucle sur chaque ligne du DataFrame pour ajouter les documents au corpus
         for i in range(len(df)):
             # Grace à la class DocumentGenerator, un même ligne crée des
-            self.add_document(DocumentGenerator.factory(df["type"][i],df["titre"][i],df["auteur"][i],df["date"][i],df["url"][i],df["texte"][i],df["autre"][i]))
+            self.add_document(DocumentGenerator.factory(type=df["type"][i],titre=df["titre"][i],auteur=df["auteur"][i],date=df["date"][i],url=df["url"][i],texte=df["texte"][i],autre=df["autre"][i]))

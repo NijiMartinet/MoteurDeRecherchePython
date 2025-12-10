@@ -14,6 +14,9 @@ class Document:
     # Méthode appelé via un print(Document)
     def __str__(self):
         return f"Document :{self.titre}"
+    
+    def __repr__(self):
+        return f"Document(type={self.type}, titre={self.titre}, auteur={self.auteur}, date={self.date}, url={self.url}, texte={self.texte})"
 
     def afficher_infos(self):
         print(f"Type : {self.type}")
@@ -24,6 +27,9 @@ class Document:
         print(f"Texte : {self.texte[:100]}...")  # Permet d'afficher uniquement les 100 premiers caractères
 
     # Getters et Setters
+    def get_type(self):
+        return self.type
+
     def get_titre(self):
         return self.titre
 
@@ -69,9 +75,8 @@ class RedditDocument(Document):
     def __str__(self):
         return f"Document Reddit :{self.titre}\nNombre de commentaire :{self.nbcom}"
 
-    def get_type(self):
-        return self.type
-
+    def __repr__(self):
+        return f"RedditDocument(type={self.type}, titre={self.titre}, auteur={self.auteur}, date={self.date}, url={self.url}, texte={self.texte}, nbcom={self.nbcom})"
 
 class ArxivDocument(Document):
     def __init__(self, titre, auteur, date, url, texte, coauteur):
@@ -87,8 +92,8 @@ class ArxivDocument(Document):
     def __str__(self):
         return f"Document Arxiv :{self.titre}\nNombre de co-auteur :{self.coauteur.len}"
 
-    def get_type(self):
-        return self.type
+    def __repr__(self):
+        return f"ArxivDocument(type={self.type}, titre={self.titre}, auteur={self.auteur}, date={self.date}, url={self.url}, texte={self.texte}, coauteur={self.coauteur})"
 
 
 class DocumentGenerator:
@@ -96,6 +101,6 @@ class DocumentGenerator:
     @staticmethod
     def factory(type, titre, auteur, date, url, texte, autre):
         if type == "Reddit":
-            return RedditDocument(titre, auteur, date, url, texte, autre)
+            return RedditDocument(titre=titre, auteur=auteur, date=date, url=url, texte=texte, nbcom=autre)
         if type == "Arxiv":
-            return ArxivDocument(titre, auteur, date, url, texte, autre)
+            return ArxivDocument(titre=titre, auteur=auteur, date=date, url=url, texte=texte, coauteur=autre)

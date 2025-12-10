@@ -1,7 +1,11 @@
 import re
+import string
+import nltk
 import pandas as pd
 from Document import DocumentGenerator
 from Author import Author
+
+nltk.download('punkt_tab', quiet=True)
 
 # Singleton afin de permettre la création d'un seul corpus
 def singleton(cls):
@@ -11,6 +15,20 @@ def singleton(cls):
             instances[0] = cls(*args, **kwargs)
         return instances[0]
     return wrapper
+
+# Utilisation de mon cours d'ingénieurie des données
+def vocabulaire_texte(texte):
+    # On split le texte
+    vocab = nltk.word_tokenize(texte) 
+    vocab = vocab.lower()
+    # On enlève tout les signes de ponctuation
+    re_punc = re.compile('[%s]' % re.escape(string.punctuation))
+    vocab = [re_punc.sub('', w) for w in vocab]
+    # On enlève ce qui n'est pas alphabétique
+    vocab = [word for word in vocab if word.isalpha()]
+    # On enlève les mots d'une lettre
+    vocab = [word for word in vocab if len(word) > 1]
+    return vocab
 
 @singleton
 # Création de la class Corpus
@@ -44,9 +62,10 @@ class Corpus:
 
     # Fonction add_document() qui permet d'ajouter un document au corpus
     def add_document(self, document):
-        self.id2doc[self.iddocument] = (
-            document  # On ajoute le document au dictionnaire des documents avec comme id l'id généré
-        )
+        self.augmente_id_document()  # On augmente l'identifiant du document
+        # On ajoute le document au dictionnaire des documents avec comme id l'id généré
+        self.id2doc[self.iddocument] = (document)
+        
         self.ndoc += 1  # On augmente le nombre de documents dans le corpus
 
         # On récupère l'auteur du document
@@ -73,17 +92,10 @@ class Corpus:
                         self.naut += 1
                     # Puis on lui ajoute le document
                     self.id2aut[co].add(self.iddocument, document)
-        self.augmente_id_document()  # On augmente l'identifiant du document
 
     # Fonction str() pour afficher les informations du corpus via print(corpus)
     def __str__(self):
-        stri = (
-            f"Nombre de documents :"
-            + str(self.ndoc)
-            + f"\nNombre d'auteur :"
-            + str(self.naut)
-        )
-        return stri
+        return f"Nombre de documents :{self.ndoc}\nNombre d'auteur :{self.naut}"
 
     # Fonction rem_document() qui permet de retirer un document du corpus
     def rem_document(self, doc_id):
@@ -131,7 +143,6 @@ class Corpus:
                         "url": doc.get_url(),
                         "texte": doc.get_texte(),
                         "autre": doc.get_nbcom(),
-                        "taille_texte": len(doc.get_texte()),
                     }
                 )
             # Si le document est de type Arxiv on ajoute les informations spécifiques
@@ -147,7 +158,6 @@ class Corpus:
                         "url": doc.get_url(),
                         "texte": doc.get_texte(),
                         "autre": doc.get_coauteur(),
-                        "taille_texte": len(doc.get_texte()),
                     }
                 )
         return pd.DataFrame(data)
@@ -158,14 +168,17 @@ class Corpus:
         # On l'enregistre en format CSV avec comme séparateur une tabulation
         df.to_csv(f"{filename}.csv", index=False, sep="\t")  
         print(f"Corpus sauvgardé dans {filename}.csv")
+        print("Afin d'avoir de bon identifiant, nous allons recharger le documents")
+        self = Corpus(self.nom)
+        self.load(filename)
 
     # Fonction load() qui permet de charger un corpus à partir d'un fichier CSV
     def load(self, filename):
-        #On remet l'identifiant du document à 0
+        # On remet l'identifiant du document à 0
         self.iddocument = 0
         # On lit le fichier CSV
         df = pd.read_csv(f"{filename}.csv", sep="\t")
-        identifiantok=True #Nous permettant de savoir si les identifiants sont correcte
+        identifiantok=True # Nous permettant de savoir si les identifiants sont correcte
 
         # On boucle sur chaque ligne du DataFrame pour ajouter les documents au corpus
         for i in range(len(df)):
@@ -173,22 +186,39 @@ class Corpus:
             if df["id"][i] != self.iddocument:
                 identifiantok=False
             self.add_document(DocumentGenerator.factory(df["type"][i],df["titre"][i],df["auteur"][i],df["date"][i],df["url"][i],df["texte"][i],df["autre"][i]))
-        #Si les/un des identifiants n'est pas correcte, on réenregistre le documents.
+            self.augmente_id_document()
+        # Si les/un des identifiants n'est pas correcte, on réenregistre le documents.
         if not identifiantok:
-            self.save(filename)
+            df = self.to_dataframe()
+            df.to_csv(f"{filename}.csv", index=False, sep="\t") 
 
-    def search(self, keyword):
+    def creation_texte(self):
         if self.texte=="" :
             for doc in self.id2doc.values():
                 self.texte+=doc.get_texte()+" "
-                #Pensez à split avec la ponctuation, les chiffres, etc ...
                 vocabulaire = doc.get_texte().split()
                 for mot in vocabulaire:
                     if mot not in self.vocabulaire:
                         self.vocabulaire[mot]=1
                     else:
                         self.vocabulaire[mot]+=1
+         
+    def creation_texte_vocab(self):
+        for doc in self.id2doc.values():
+            self.texte+=doc.get_texte()+" "
+            # Pensez à split avec la ponctuation, les chiffres, etc ...
+            vocabulaire = vocabulaire_texte(doc.get_texte)
+            for mot in vocabulaire:
+                if mot not in self.vocabulaire:
+                    self.vocabulaire[mot]=1
+                else:
+                    self.vocabulaire[mot]+=1
 
+    def search(self, keyword):
+        # Si le texte n'a pas été créer, on le crée.
+        if self.texte=="" :
+            self.creation_texte_vocab()
+        
         p = re.compile(keyword)
         textefound = p.finditer(self.texte)
         df = []
@@ -196,18 +226,12 @@ class Corpus:
             contexte_gauche = "..."+self.texte[t.start()-30:t.start()]
             contexte_droit = self.texte[t.end():t.end()+30]+"..."
             mot = self.texte[t.start():t.end()]
-            df.append({'contexte gauche':contexte_gauche,
-                            'mot':mot,
-                            'contexte droit':contexte_droit})
+            df.append({'contexte gauche':contexte_gauche,'mot':mot,'contexte droit':contexte_droit})
         return df
 
     def concorde(self, keyword):
         df = pd.DataFrame(self.search(keyword))
         print(df)
-
-    def nettoyer_texte(self, texte):
-        texte = texte.lower()
-        texte = texte.replace("\n", " ")
 
 
 

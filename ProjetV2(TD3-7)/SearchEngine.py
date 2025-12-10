@@ -1,4 +1,5 @@
 from Corpus import Corpus
+from Corpus import vocabulaire_texte
 from numpy import array
 from numpy import zeros
 from numpy import dot
@@ -16,13 +17,8 @@ class SearchEngine:
         i=0 #L'identifiant unique
         vocab = dict() #Initialisation d'un dictionnaire
         for doc in self.corpus.id2doc.values(): #Pour chaque document
-            texte = doc.get_texte() #On récupère le texte
-            #On fait des traitements dessus
-            texte = texte.lower()
-            texte = re.sub(r'[^a-z]', ' ', texte)
-
-            #On récupère les mots 
-            mots = texte.split()
+            mots = vocabulaire_texte(doc.get_texte())          
+            
             #Cette variable nous permettra de récupérer les mots qui sont dans ce dictionnaire
             nvdoucument=[]
 
@@ -55,11 +51,7 @@ class SearchEngine:
             for v in self.vocab:
                 #i est l'identifiant du mot (une valeur numérique pour le retrouver dans la matrice)
                 i = self.vocab[v]['identifiant']
-
-                texte = self.corpus.id2doc.get(d).get_texte()#On récupère le texte
-                #On fait des traitements dessus
-                texte = texte.lower()
-                texte = re.sub(r'[^a-z]', ' ', texte)
+                texte = ' '.join(vocabulaire_texte(self.corpus.id2doc.get(d).get_texte()))
 
                 #On regarde le nombre de fois qu'on trouve le mot v dans le doc d
                 p = re.compile(v)
@@ -78,7 +70,7 @@ class SearchEngine:
         #Pour chaque document d
         for d in self.corpus.id2doc:
             #On récupère le nombre de mot dans le document
-            nb_mot_doc = len(self.corpus.id2doc.get(d).get_texte().split())
+            nb_mot_doc = len(vocabulaire_texte(self.corpus.id2doc.get(d).get_texte()))
             #Pour chaque mot du vocabulaire v
             for v in self.vocab:
                 #On récupère son identifiant
@@ -100,6 +92,8 @@ class SearchEngine:
         self.vocab=self.defVocab()
         self.mat_TF=self.defMat_TF()
         self.mat_TFxIDF = self.defMat_TFxIDF()
+
+    #--------------------ICI----------------------------
 
     def search(self, texte, n):
         #On crée un vecteur de la bonne dimention
