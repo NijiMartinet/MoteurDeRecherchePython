@@ -19,8 +19,7 @@ def singleton(cls):
 # Utilisation de mon cours d'ingénieurie des données
 def vocabulaire_texte(texte):
     # On split le texte
-    vocab = nltk.word_tokenize(texte) 
-    vocab = vocab.lower()
+    vocab = nltk.word_tokenize(texte.lower()) 
     # On enlève tout les signes de ponctuation
     re_punc = re.compile('[%s]' % re.escape(string.punctuation))
     vocab = [re_punc.sub('', w) for w in vocab]
@@ -62,7 +61,6 @@ class Corpus:
 
     # Fonction add_document() qui permet d'ajouter un document au corpus
     def add_document(self, document):
-        self.augmente_id_document()  # On augmente l'identifiant du document
         # On ajoute le document au dictionnaire des documents avec comme id l'id généré
         self.id2doc[self.iddocument] = (document)
         
@@ -92,6 +90,7 @@ class Corpus:
                         self.naut += 1
                     # Puis on lui ajoute le document
                     self.id2aut[co].add(self.iddocument, document)
+        self.augmente_id_document()  # On augmente l'identifiant du document
 
     # Fonction str() pour afficher les informations du corpus via print(corpus)
     def __str__(self):
@@ -129,13 +128,14 @@ class Corpus:
     # Fonction to_dataframe() qui permet de convertir le corpus en DataFrame
     def to_dataframe(self):
         data = []  # Création d'une liste vide pour stocker les données
+        self.iddocument = 0 # On va remmetrre les identifiants dans l'ordre
         # On boucle sur chaque document du corpus (en récupérant son id et son objet document)
-        for doc_id, doc in self.id2doc.items():
+        for doc in self.id2doc.values():
             # Si le document est de type Reddit on ajoute les informations spécifiques
             if doc.get_type() == "Reddit":
                 data.append(
                     {
-                        "id": doc_id,
+                        "id": self.iddocument,
                         "type": doc.get_type(),
                         "titre": doc.get_titre(),
                         "auteur": doc.get_auteur(),
@@ -150,7 +150,7 @@ class Corpus:
             elif doc.get_type() == "Arxiv":
                 data.append(
                     {
-                        "id": doc_id,
+                        "id": self.iddocument,
                         "type": doc.get_type(),
                         "titre": doc.get_titre(),
                         "auteur": doc.get_auteur(),
@@ -160,6 +160,7 @@ class Corpus:
                         "autre": doc.get_coauteur(),
                     }
                 )
+            self.augmente_id_document()
         return pd.DataFrame(data)
 
     # Focntion save() qui permet de sauvegarder le corpus dans un fichier CSV
@@ -168,29 +169,14 @@ class Corpus:
         # On l'enregistre en format CSV avec comme séparateur une tabulation
         df.to_csv(f"{filename}.csv", index=False, sep="\t")  
         print(f"Corpus sauvgardé dans {filename}.csv")
-        print("Afin d'avoir de bon identifiant, nous allons recharger le documents")
-        self = Corpus(self.nom)
-        self.load(filename)
 
     # Fonction load() qui permet de charger un corpus à partir d'un fichier CSV
     def load(self, filename):
-        # On remet l'identifiant du document à 0
-        self.iddocument = 0
         # On lit le fichier CSV
         df = pd.read_csv(f"{filename}.csv", sep="\t")
-        identifiantok=True # Nous permettant de savoir si les identifiants sont correcte
-
         # On boucle sur chaque ligne du DataFrame pour ajouter les documents au corpus
         for i in range(len(df)):
-            # Grace à la class DocumentGenerator, un même ligne crée des documents différents
-            if df["id"][i] != self.iddocument:
-                identifiantok=False
             self.add_document(DocumentGenerator.factory(df["type"][i],df["titre"][i],df["auteur"][i],df["date"][i],df["url"][i],df["texte"][i],df["autre"][i]))
-            self.augmente_id_document()
-        # Si les/un des identifiants n'est pas correcte, on réenregistre le documents.
-        if not identifiantok:
-            df = self.to_dataframe()
-            df.to_csv(f"{filename}.csv", index=False, sep="\t") 
 
     def creation_texte(self):
         if self.texte=="" :
@@ -233,7 +219,14 @@ class Corpus:
         df = pd.DataFrame(self.search(keyword))
         print(df)
 
-
+    def clear(self):
+        self.id2aut = {}  # Dictionnaire des auteurs
+        self.id2doc = {}  # Dictionnaire de document
+        self.ndoc = 0  # Nombre de documents dans le corpus
+        self.naut = 0  # Nombre d'auteurs dans le corpus
+        self.iddocument = 0  # Identifiant des documents géré automatiquement
+        self.texte=""  # Texte de tout le corpus 
+        self.vocabulaire=dict()  # Vocabulaire du corpus
 
 
         

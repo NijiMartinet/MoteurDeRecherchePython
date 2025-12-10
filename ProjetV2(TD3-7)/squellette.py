@@ -10,16 +10,14 @@ from tqdm import tqdm
 
 docs = Corpus("test")
 
-if os.path.exists("test.csv"):
-    docs.load("test")
-else:
+if not os.path.exists("test.csv"):
     print("Récupération des documents Reddit :")
     # Se connecter sur Reddit
     reddit = praw.Reddit(client_id="chp-OSvcT2YNGYMdLRLTdw",client_secret="JDBMQbv6014x63VLUFbUb4dDX0-mTQ",user_agent="Blbl")
 
     # On va charger le CORPS de chaque subreddit en lien avec le machinLearning
-    hot_posts = reddit.subreddit("all").hot(limit=5000)
-    with tqdm(total=5000) as bar:
+    hot_posts = reddit.subreddit("all").hot(limit=10)
+    with tqdm(total=10) as bar:
         for post in hot_posts:
             #On récupère chaque informations
             texte = post.selftext.replace("\n", " ")
@@ -37,11 +35,11 @@ else:
     
     print("\n\nRécupération des documents Arxiv :")
     # On passe au document Arxiv
-    url = "http://export.arxiv.org/api/query?search_query=all:electron&start=0&max_results=5000"
+    url = "http://export.arxiv.org/api/query?search_query=all:electron&start=0&max_results=10"
     requete = urllib.request.urlopen(url)
     parsed = xmltodict.parse(requete.read().decode("utf-8"))
     # On boucle sur chaque document qu'on a récupérer
-    with tqdm(total=5000) as bar:
+    with tqdm(total=10) as bar:
         for j in range(0, len(parsed["feed"]["entry"])):
             texte = parsed["feed"]["entry"][j]["summary"].replace("\n", " ")
         
@@ -91,6 +89,9 @@ else:
     print("\n\nEnregistrement de notre corpus dans un fichier csv :")
     docs.save("test")
 
+# Afin de récupérer les bon identifiants
+docs.clear()
+docs.load("test")
 print(docs)
 
 bl = SearchEngine(docs)
