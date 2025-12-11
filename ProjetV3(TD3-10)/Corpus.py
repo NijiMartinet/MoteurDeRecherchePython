@@ -1,7 +1,11 @@
 import re
+import string
+import nltk
 import pandas as pd
 from Document import DocumentGenerator
 from Author import Author
+
+nltk.download('punkt_tab', quiet=True)
 
 # Singleton afin de permettre la création d'un seul corpus
 def singleton(cls):
@@ -11,6 +15,19 @@ def singleton(cls):
             instances[0] = cls(*args, **kwargs)
         return instances[0]
     return wrapper
+
+# Utilisation de mon cours d'ingénieurie des données
+def vocabulaire_texte(texte):
+    # On split le texte
+    vocab = nltk.word_tokenize(texte.lower()) 
+    # On enlève tout les signes de ponctuation
+    re_punc = re.compile('[%s]' % re.escape(string.punctuation))
+    vocab = [re_punc.sub('', w) for w in vocab]
+    # On enlève ce qui n'est pas alphabétique
+    vocab = [word for word in vocab if word.isalpha()]
+    # On enlève les mots d'une lettre
+    vocab = [word for word in vocab if len(word) > 1]
+    return vocab
 
 @singleton
 # Création de la class Corpus
@@ -77,13 +94,7 @@ class Corpus:
 
     # Fonction str() pour afficher les informations du corpus via print(corpus)
     def __str__(self):
-        stri = (
-            f"Nombre de documents :"
-            + str(self.ndoc)
-            + f"\nNombre d'auteur :"
-            + str(self.naut)
-        )
-        return stri
+        return f"Nombre de documents :{self.ndoc}\nNombre d'auteur :{self.naut}"
 
     # Fonction rem_document() qui permet de retirer un document du corpus
     def rem_document(self, doc_id):
@@ -117,13 +128,14 @@ class Corpus:
     # Fonction to_dataframe() qui permet de convertir le corpus en DataFrame
     def to_dataframe(self):
         data = []  # Création d'une liste vide pour stocker les données
+        self.iddocument = 0 # On va remmetrre les identifiants dans l'ordre
         # On boucle sur chaque document du corpus (en récupérant son id et son objet document)
-        for doc_id, doc in self.id2doc.items():
+        for doc in self.id2doc.values():
             # Si le document est de type Reddit on ajoute les informations spécifiques
             if doc.get_type() == "Reddit":
                 data.append(
                     {
-                        "id": doc_id,
+                        "id": self.iddocument,
                         "type": doc.get_type(),
                         "titre": doc.get_titre(),
                         "auteur": doc.get_auteur(),
@@ -131,7 +143,6 @@ class Corpus:
                         "url": doc.get_url(),
                         "texte": doc.get_texte(),
                         "autre": doc.get_nbcom(),
-                        "taille_texte": len(doc.get_texte()),
                     }
                 )
             # Si le document est de type Arxiv on ajoute les informations spécifiques
@@ -139,7 +150,7 @@ class Corpus:
             elif doc.get_type() == "Arxiv":
                 data.append(
                     {
-                        "id": doc_id,
+                        "id": self.iddocument,
                         "type": doc.get_type(),
                         "titre": doc.get_titre(),
                         "auteur": doc.get_auteur(),
@@ -147,64 +158,46 @@ class Corpus:
                         "url": doc.get_url(),
                         "texte": doc.get_texte(),
                         "autre": doc.get_coauteur(),
-                        "taille_texte": len(doc.get_texte()),
                     }
                 )
+            self.augmente_id_document()
         return pd.DataFrame(data)
 
     # Focntion save() qui permet de sauvegarder le corpus dans un fichier CSV
     def save(self, filename):
-        df = self.to_dataframe()  # On récupère le DataFrame du corpus
+        df = self.to_dataframe()  # On récupère le DataFrame du corpus et met les bons identifiants
         # On l'enregistre en format CSV avec comme séparateur une tabulation
         df.to_csv(f"{filename}.csv", index=False, sep="\t")  
         print(f"Corpus sauvgardé dans {filename}.csv")
 
+
     # Fonction load() qui permet de charger un corpus à partir d'un fichier CSV
     def load(self, filename):
-        #On remet l'identifiant du document à 0
-        self.iddocument = 0
         # On lit le fichier CSV
         df = pd.read_csv(f"{filename}.csv", sep="\t")
-        if 'type' in df.columns:
-            identifiantok=True #Nous permettant de savoir si les identifiants sont correcte
-
-            # On boucle sur chaque ligne du DataFrame pour ajouter les documents au corpus
+        if 'type' in df.columns: #On connais le type du documents
             for i in range(len(df)):
-                # Grace à la class DocumentGenerator, un même ligne crée des documents différents
-                if df["id"][i] != self.iddocument:
-                    identifiantok=False
-                self.add_document(DocumentGenerator.factory(df["type"][i],df["titre"][i],df["auteur"][i],df["date"][i],df["url"][i],df["texte"][i],df["autre"][i]))
-           
-            #Si les/un des identifiants n'est pas correcte, on réenregistre le documents.
-            if not identifiantok:
-                self.save(filename)
-        else :
+                self.add_document(DocumentGenerator.factory(type=df["type"][i],titre=df["titre"][i],auteur=df["auteur"][i],date=df["date"][i],url=df["url"][i],texte=df["texte"][i],autre=df["autre"][i]))
+        else : #On ne connais pas le type -> c'est un discours
             for i in range(len(df)):
-                self.add_document(DocumentGenerator.factory("Discours",df["speaker"][i],df["text"][i],df["date"][i],df["descr"][i],df["link"][i],""))
+                self.add_document(DocumentGenerator.factory(type="Discours",auteur=df["speaker"][i],texte=df["text"][i],date=df["date"][i],titre=df["descr"][i],url=df["link"][i])) 
 
-    def loadDiscours(self, filename):
-        #On remet l'identifiant du document à 0
-        self.iddocument = 0
-        # On lit le fichier CSV
-        df = pd.read_csv(f"{filename}.csv", sep="\t")
-        # On boucle sur chaque ligne du DataFrame pour ajouter les documents au corpus
-        for i in range(len(df)):
-            # Grace à la class DocumentGenerator, un même ligne crée des documents différents
-            self.add_document(DocumentGenerator.factory("Discours",df["speaker"][i],df["descr"][i],df["date"][i],df["link"][i],df["text"][i],""))
-        
+    def creation_texte_vocab(self):
+        for doc in self.id2doc.values():
+            self.texte+=doc.get_texte()+" "
+            # Pensez à split avec la ponctuation, les chiffres, etc ...
+            vocabulaire = vocabulaire_texte(doc.get_texte)
+            for mot in vocabulaire:
+                if mot not in self.vocabulaire:
+                    self.vocabulaire[mot]=1
+                else:
+                    self.vocabulaire[mot]+=1
 
     def search(self, keyword):
+        # Si le texte n'a pas été créer, on le crée.
         if self.texte=="" :
-            for doc in self.id2doc.values():
-                self.texte+=doc.get_texte()+" "
-                #Pensez à split avec la ponctuation, les chiffres, etc ...
-                vocabulaire = doc.get_texte().split()
-                for mot in vocabulaire:
-                    if mot not in self.vocabulaire:
-                        self.vocabulaire[mot]=1
-                    else:
-                        self.vocabulaire[mot]+=1
-
+            self.creation_texte_vocab()
+        
         p = re.compile(keyword)
         textefound = p.finditer(self.texte)
         df = []
@@ -212,18 +205,21 @@ class Corpus:
             contexte_gauche = "..."+self.texte[t.start()-30:t.start()]
             contexte_droit = self.texte[t.end():t.end()+30]+"..."
             mot = self.texte[t.start():t.end()]
-            df.append({'contexte gauche':contexte_gauche,
-                            'mot':mot,
-                            'contexte droit':contexte_droit})
+            df.append({'contexte gauche':contexte_gauche,'mot':mot,'contexte droit':contexte_droit})
         return df
 
     def concorde(self, keyword):
         df = pd.DataFrame(self.search(keyword))
         print(df)
 
-    def nettoyer_texte(self, texte):
-        texte = texte.lower()
-        texte = texte.replace("\n", " ")
+    def clear(self):
+        self.id2aut = {}  # Dictionnaire des auteurs
+        self.id2doc = {}  # Dictionnaire de document
+        self.ndoc = 0  # Nombre de documents dans le corpus
+        self.naut = 0  # Nombre d'auteurs dans le corpus
+        self.iddocument = 0  # Identifiant des documents géré automatiquement
+        self.texte=""  # Texte de tout le corpus 
+        self.vocabulaire=dict()  # Vocabulaire du corpus
 
 
 

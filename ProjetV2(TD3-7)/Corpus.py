@@ -165,7 +165,7 @@ class Corpus:
 
     # Focntion save() qui permet de sauvegarder le corpus dans un fichier CSV
     def save(self, filename):
-        df = self.to_dataframe()  # On récupère le DataFrame du corpus
+        df = self.to_dataframe()  # On récupère le DataFrame du corpus et met les bons identifiants
         # On l'enregistre en format CSV avec comme séparateur une tabulation
         df.to_csv(f"{filename}.csv", index=False, sep="\t")  
         print(f"Corpus sauvgardé dans {filename}.csv")
@@ -176,18 +176,7 @@ class Corpus:
         df = pd.read_csv(f"{filename}.csv", sep="\t")
         # On boucle sur chaque ligne du DataFrame pour ajouter les documents au corpus
         for i in range(len(df)):
-            self.add_document(DocumentGenerator.factory(df["type"][i],df["titre"][i],df["auteur"][i],df["date"][i],df["url"][i],df["texte"][i],df["autre"][i]))
-
-    def creation_texte(self):
-        if self.texte=="" :
-            for doc in self.id2doc.values():
-                self.texte+=doc.get_texte()+" "
-                vocabulaire = doc.get_texte().split()
-                for mot in vocabulaire:
-                    if mot not in self.vocabulaire:
-                        self.vocabulaire[mot]=1
-                    else:
-                        self.vocabulaire[mot]+=1
+            self.add_document(DocumentGenerator.factory(type=df["type"][i],titre=df["titre"][i],auteur=df["auteur"][i],date=df["date"][i],url=df["url"][i],texte=df["texte"][i],autre=df["autre"][i]))
          
     def creation_texte_vocab(self):
         for doc in self.id2doc.values():
