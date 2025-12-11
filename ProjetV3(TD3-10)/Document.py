@@ -27,6 +27,9 @@ class Document:
         print(f"Texte : {self.texte[:100]}...")  # Permet d'afficher uniquement les 100 premiers caractères
 
     # Getters et Setters
+    def get_type(self):
+        return self.type
+    
     def get_titre(self):
         return self.titre
 
@@ -102,10 +105,6 @@ class DiscoursDocument(Document):
     
     def __rep__(self):
         return f"DiscoursDocument(type={self.type}, titre={self.titre}, auteur={self.auteur}, date={self.date}, url={self.url}, texte={self.texte})"
-
-    def get_type(self):
-        return self.type
-
 
 class DocumentGenerator:
     # Renvoie une instance de la classe Document en fonction du type
