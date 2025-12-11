@@ -10,6 +10,8 @@ import re
 import pandas as pd
 from tqdm import tqdm
 from scipy.sparse import csr_matrix
+from collections import Counter
+
 
 class SearchEngine:
 
@@ -45,6 +47,7 @@ class SearchEngine:
                 bar.update(1)
         return vocab
     
+    '''
     # Fonction pour définir la matrice mat_TF
     def defMat_TF(self):
         # On initialise la matrice mat_TF au bonne dimension -> [nb document,nb mot]
@@ -52,8 +55,9 @@ class SearchEngine:
         # Pour chaque document
         for d in self.corpus.id2doc:
                 # Pour chaque mot dans le vocabulaire
-                print("Construction de la matrice TF:")
-                with tqdm(total=len(self.vocab)) as bar:
+                #print("Construction de la matrice TF:")
+                #print(len(self.vocab))
+                #with tqdm(total=len(self.vocab)) as bar:
                     for v in self.vocab:
                         # i est l'identifiant du mot (une valeur numérique pour le retrouver dans la matrice)
                         i = self.vocab[v]['identifiant']
@@ -63,15 +67,31 @@ class SearchEngine:
                         textefound = list(p.finditer(texte))
                         # On met le nombre d'occurence dans la bonne case de la matrice
                         mat_TF[d][i]=len(textefound)
-                        bar.update(1)
+                        #bar.update(1)
         # On utilise csr_matrix pour notre matrice car c'est une matrice creuse
         mat_TF = csr_matrix(mat_TF, dtype=int).toarray()
         # On retourne la matrice
         return mat_TF
+    '''
+
+    def defMat_TF(self):
+        mat_TF = zeros((self.corpus.ndoc, len(self.vocab)), dtype=int)
+        with tqdm(total=self.corpus.ndoc) as bar:
+            for d, doc in self.corpus.id2doc.items():
+                # Tokenisation du texte
+                tokens = vocabulaire_texte(doc.get_texte())  # renvoie déjà une liste de mots
+                counts = Counter(tokens)  # compte toutes les occurrences en une seule fois
+
+                # Remplissage de la ligne correspondante au document
+                for word, data in self.vocab.items():
+                    idx = data["identifiant"]     # index colonne dans la matrice
+                    mat_TF[d][idx] = counts.get(word, 0)
+                bar.update(1)
+
+        return csr_matrix(mat_TF, dtype=int).toarray()
     
     # Fonction pour définir la matrice mat_TFxIDF
     def defMat_TFxIDF(self):
-        print("Construction de la matrice TFxIDF:")
         with tqdm(total=self.corpus.ndoc) as bar:
             # On la met au bonne dimension
             mat_TFxIDF = empty((self.corpus.ndoc,len(self.vocab)))
@@ -83,7 +103,6 @@ class SearchEngine:
                 for v in self.vocab:
                     # On récupère son identifiant
                     i = self.vocab[v]['identifiant']
-
                     # On calcule tf = nb d'occurence du mot dans le doc / nb_mot_doc
                     tf=self.mat_TF[d][i] / nb_mot_doc
                     # On calcule idf = log(nombre de document / nombre de document où il y a le mot)
@@ -94,14 +113,13 @@ class SearchEngine:
         # On retourne la matrice
         return mat_TFxIDF
 
-
     # Initialisation de la classe qui va utiliser les fonctions précédentes pour définir certain termes
     def __init__(self, corpus):
         self.corpus=corpus
         self.vocab=self.defVocab()
-        print("\n")
+        print("Construction de la matrice TF:")
         self.mat_TF=self.defMat_TF()
-        print("\n")
+        print("Construction de la matrice TFxIDF:")
         self.mat_TFxIDF = self.defMat_TFxIDF()
 
     def search(self, texte, n):
