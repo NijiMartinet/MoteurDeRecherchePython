@@ -88,9 +88,10 @@ if not os.path.exists("test.csv"):
     # On enregiste le document crée
     print("\n\nEnregistrement de notre corpus dans un fichier csv :")
     docs.save("test")
+    # Afin de récupérer les bon identifiants après
+    docs.clear()
 
-# Afin de récupérer les bon identifiants
-docs.clear()
+
 docs.load("test")
 print(docs)
 

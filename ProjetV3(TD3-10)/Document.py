@@ -16,7 +16,7 @@ class Document:
         return f"Document :{self.titre}"
     
     def __repr__(self):
-        return f"Document(type={self.type}, \ntitre={self.titre},\nauteur={self.auteur},\ndate={self.date},\nurl={self.url},\ntexte={self.texte})"
+        return f"Document(type={self.type}, titre={self.titre}, auteur={self.auteur}, date={self.date}, url={self.url}, texte={self.texte})"
 
     def afficher_infos(self):
         print(f"Type : {self.type}")
@@ -72,9 +72,8 @@ class RedditDocument(Document):
     def __str__(self):
         return f"Document Reddit :{self.titre}\nNombre de commentaire :{self.nbcom}"
 
-    def get_type(self):
-        return self.type
-
+    def __repr__(self):
+        return f"RedditDocument(type={self.type}, titre={self.titre}, auteur={self.auteur}, date={self.date}, url={self.url}, texte={self.texte}, nbcom={self.nbcom})"
 
 class ArxivDocument(Document):
     def __init__(self, titre, auteur, date, url, texte, coauteur):
@@ -90,15 +89,19 @@ class ArxivDocument(Document):
     def __str__(self):
         return f"Document Arxiv :{self.titre}\nNombre de co-auteur :{self.coauteur.len}"
 
-    def get_type(self):
-        return self.type
+    def __repr__(self):
+        return f"ArxivDocument(type={self.type}, titre={self.titre}, auteur={self.auteur}, date={self.date}, url={self.url}, texte={self.texte}, coauteur={self.coauteur})"
+
 
 class DiscoursDocument(Document):
     def __init__(self, speaker, text, date, desc, link):
-        super().__init__("Discours", desc, speaker, date, link, text)
+        super().__init__(type="Discours", titre=desc, auteur=speaker, date=date, url=link, texte=text)
 
     def __str__(self):
         return f"Discours :{self.desc}\nSpeaker :{self.speaker}"
+    
+    def __rep__(self):
+        return f"DiscoursDocument(type={self.type}, titre={self.titre}, auteur={self.auteur}, date={self.date}, url={self.url}, texte={self.texte})"
 
     def get_type(self):
         return self.type
@@ -107,10 +110,10 @@ class DiscoursDocument(Document):
 class DocumentGenerator:
     # Renvoie une instance de la classe Document en fonction du type
     @staticmethod
-    def factory(type, titre, auteur, date, url, texte, autre):
+    def factory(type, titre, auteur, date, url, texte, autre=""):
         if type == "Reddit":
-            return RedditDocument(titre, auteur, date, url, texte, autre)
+            return RedditDocument(titre=titre, auteur=auteur, date=date, url=url, texte=texte, nbcom=autre)
         if type == "Arxiv":
-            return ArxivDocument(titre, auteur, date, url, texte, autre)
+            return ArxivDocument(titre=titre, auteur=auteur, date=date, url=url, texte=texte, coauteur=autre)
         if type == "Discours":
-            return DiscoursDocument(titre, auteur, date, url, texte)
+            return DiscoursDocument(titre=titre, auteur=auteur, date=date, url=url, texte=texte)
