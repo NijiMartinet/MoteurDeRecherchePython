@@ -186,7 +186,7 @@ class Corpus:
         for doc in self.id2doc.values():
             self.texte+=doc.get_texte()+" "
             # Pensez à split avec la ponctuation, les chiffres, etc ...
-            vocabulaire = vocabulaire_texte(doc.get_texte)
+            vocabulaire = vocabulaire_texte(doc.get_texte())
             for mot in vocabulaire:
                 if mot not in self.vocabulaire:
                     self.vocabulaire[mot]=1
