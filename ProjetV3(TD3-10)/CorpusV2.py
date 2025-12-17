@@ -4,7 +4,9 @@ import nltk
 import pandas as pd
 from Document import DocumentGenerator
 from Author import Author
-
+from nltk.corpus import stopwords
+from nltk.stem.snowball import SnowballStemmer
+nltk.download('stopwords')
 nltk.download('punkt_tab', quiet=True)
 
 # Singleton afin de permettre la création d'un seul corpus
@@ -17,15 +19,25 @@ def singleton(cls):
     return wrapper
 
 # Utilisation de mon cours d'ingénieurie des données
+# On va tokenizer le texte
+# Puis on enlève les signes de ponctuation
+# Puis on enlève les stopwords
+# Puis on enlève les mots trop court
+# Puis on racinize pour garder la racine des mots
 def vocabulaire_texte(texte):
     # On split le texte
     vocab = nltk.word_tokenize(texte.lower()) 
     # On enlève tout les signes de ponctuation
     re_punc = re.compile('[%s]' % re.escape(string.punctuation))
     vocab = [re_punc.sub('', w) for w in vocab]
+    # On filtre les stopwords (mot qui ne porte pas du sens)
+    stop_words = set(stopwords.words('english'))
+    vocab = [w for w in vocab if not w in stop_words]
     # On enlève les mots d'une lettre
     vocab = [word for word in vocab if len(word) > 1]
-    return vocab
+    # apply stemming using snowball
+    vocab_stemmed = [SnowballStemmer('english').stem(word) for word in vocab]
+    return vocab_stemmed
 
 @singleton
 # Création de la class Corpus

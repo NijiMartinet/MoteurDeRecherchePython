@@ -23,8 +23,6 @@ def vocabulaire_texte(texte):
     # On enlève tout les signes de ponctuation
     re_punc = re.compile('[%s]' % re.escape(string.punctuation))
     vocab = [re_punc.sub('', w) for w in vocab]
-    # On enlève ce qui n'est pas alphabétique
-    vocab = [word for word in vocab if word.isalpha()]
     # On enlève les mots d'une lettre
     vocab = [word for word in vocab if len(word) > 1]
     return vocab
