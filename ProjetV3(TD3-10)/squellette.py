@@ -5,7 +5,7 @@ import pandas as pd
 import os
 from Corpus import Corpus
 from Document import DocumentGenerator
-from SearchEngine import SearchEngine
+from SearchEngineV2 import SearchEngine
 from tqdm import tqdm
 
 docs = Corpus("test")

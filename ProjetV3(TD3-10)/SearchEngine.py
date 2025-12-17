@@ -13,7 +13,6 @@ from scipy.sparse import csr_matrix
 from collections import Counter
 
 
-
 class SearchEngine:
 
     # Fonction pour construire la variable vocab
@@ -118,6 +117,8 @@ class SearchEngine:
             #On ajoute au tableau les informations
             tab_doc.append((cos,d))
 
+        print(vector_doc.shape)
+        print(vector.shape)
         # On trie le tableau en fonction de la mesure de distance dans l'ordre croissant
         tab_doc = sorted(tab_doc, key=lambda x: x[0])
         # On fait notre tableau de résultats
