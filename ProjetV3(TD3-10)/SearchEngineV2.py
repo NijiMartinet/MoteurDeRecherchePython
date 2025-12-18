@@ -89,42 +89,47 @@ class SearchEngine :
         self.mat_TFxIDF = self.defMat_TFxIDF()
 
     def search(self, texte, n) :
-        #On calcule le vecteur du texte
-        vector = self.vectorizer.transform(clean_texte2(texte))
-        #On force sa shape en (n,)
-        vector = vector.toarray()
-        vector = vector[0]
-        # On crée un tableau qui comportera la mesure de distance et l'id du docuement
-        tab_doc = []
+        vector = clean_texte2(texte)
+        if len(vector) != 0 :
+            #On calcule le vecteur du texte
+            vector = self.vectorizer.transform(clean_texte2(texte))
+            #On force sa shape en (n,)
+            vector = vector.toarray()
+            vector = vector[0]
+            # On crée un tableau qui comportera la mesure de distance et l'id du docuement
+            tab_doc = []
 
-        # Pour facilité, on récupère le dictionnaire des documents
-        docs = self.corpus.id2doc
+            # Pour facilité, on récupère le dictionnaire des documents
+            docs = self.corpus.id2doc
 
-        # Pour chaque document
-        for d in docs :
-            # On récupère son vecteur TFxIDF
-            vector_doc = self.mat_TFxIDF[d]
-            vector_doc = vector_doc.toarray()
-            vector_doc = vector_doc[0]
-            # On calcule le cosinus
-            cos = dot(vector,vector_doc) / (norm(vector) * norm(vector_doc))
-            #On ajoute au tableau les informations
-            tab_doc.append((cos,d))
+            # Pour chaque document
+            for d in docs :
+                # On récupère son vecteur TFxIDF
+                vector_doc = self.mat_TFxIDF[d]
+                vector_doc = vector_doc.toarray()
+                vector_doc = vector_doc[0]
+                # On calcule le cosinus
+                cos = dot(vector,vector_doc) / (norm(vector) * norm(vector_doc))
+                #On ajoute au tableau les informations
+                tab_doc.append((cos,d))
 
-        # On trie le tableau en fonction de la mesure de distance dans l'ordre croissant
-        tab_doc = sorted(tab_doc, key = lambda x : x[0])
-        # On fait notre tableau de résultats
-        res = []
+            # On trie le tableau en fonction de la mesure de distance dans l'ordre croissant
+            tab_doc = sorted(tab_doc, key = lambda x : x[0])
+            # On fait notre tableau de résultats
+            res = []
         
-        # On boucle de 1 à n avec n le nombre de document qu'on veux (vu qu'on veux aller à n on met n+1)
-        for i in range(1,n+1) :
-            # On ajoute au résultats le document avec son id, son titre et son texte
-            res.append({"id" :tab_doc[-i][1], 
+            # On boucle de 1 à n avec n le nombre de document qu'on veux (vu qu'on veux aller à n on met n+1)
+            for i in range(1,n+1) :
+                # On ajoute au résultats le document avec son id, son titre et son texte
+                res.append({"id" : tab_doc[-i][1], 
                         "titre" : docs.get(tab_doc[-i][1]).get_titre(),
-                        "texte" : docs.get(tab_doc[-i][1]).get_texte()}
-                      )
-            # On utilise -i car les mesures de distance sont ranger dans l'ordre croissant donc celle qui nous interressent sont à la fin
-        return pd.DataFrame(res)
+                        "texte" : docs.get(tab_doc[-i][1]).get_texte(),
+                        "url" : docs.get(tab_doc[-i][1]).get_url()}
+                    )
+                # On utilise -i car les mesures de distance sont ranger dans l'ordre croissant donc celle qui nous interressent sont à la fin
+            return pd.DataFrame(res)
+        else:
+            return "Votre/vos mots ne sont pas représentatif"
             
     def info(self) :
         print("Taille de vocab :", len(self.vocab))
