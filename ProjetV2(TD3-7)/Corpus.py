@@ -175,7 +175,6 @@ class Corpus :
         # On boucle sur chaque ligne du DataFrame pour ajouter les documents au corpus
         for i in range(len(df)) :
             self.add_document(DocumentGenerator.factory(type = df["type"][i],titre = df["titre"][i],auteur = df["auteur"][i],date = df["date"][i],url = df["url"][i],texte = df["texte"][i],autre = df["autre"][i]))
-        self.save(filename)
          
     def creation_texte_vocab(self) :
         for doc in self.id2doc.values() :
